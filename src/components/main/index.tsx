@@ -67,7 +67,20 @@ export default class Main extends React.Component<
                 placeholder="Enter User Email Address"
               />
             </div>
-            <div className="title-lay">Add User's Photos</div>
+            <div className="title-lay">
+              <span>Add User's Photos</span>
+              <div
+                className="add-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  this.onAddBtnClick();
+                }}
+              >
+                <i className="fa fa-plus add-icon"></i>
+                <span>Add</span>
+              </div>
+            </div>
             <div className="images-main-lay">
               <input
                 hidden={true}
@@ -80,16 +93,6 @@ export default class Main extends React.Component<
                   this.handleFileChange(e.target.files);
                 }}
               />
-              <div className="add-btn">
-                <i
-                  className="fa fa-plus add-icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    this.onAddBtnClick();
-                  }}
-                ></i>
-              </div>
               <div className="images-lay">
                 {this.state.input_images.map((image: string, index: number) => {
                   return (
