@@ -18,6 +18,7 @@ code {
   --color-act: rgb(128, 204, 255);
   --color-bg: rgb(226, 226, 226);
   --color-bg-sec: rgb(252, 252, 252);
+  --color-sec-txt: rgb(46, 141, 204);
 }
 
 .mdm-shadow {
