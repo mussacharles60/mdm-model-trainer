@@ -20,6 +20,7 @@ export default class Main extends React.Component<
     this.onUserIdChanged = this.onUserIdChanged.bind(this);
     this.onAddBtnClick = this.onAddBtnClick.bind(this);
     this.handleFileChange = this.handleFileChange.bind(this);
+    this.onRemoveAllBtnClick = this.onRemoveAllBtnClick.bind(this);
     this.onRemoveBtnClick = this.onRemoveBtnClick.bind(this);
   }
 
@@ -34,8 +35,14 @@ export default class Main extends React.Component<
     }
   }
 
-  onRemoveBtnClick() {
+  onRemoveAllBtnClick() {
     this.setState({ input_images: [] });
+  }
+
+  onRemoveBtnClick(index: number) {
+    const images = this.state.input_images;
+    images.splice(index, 1);
+    this.setState({ input_images: images });
   }
 
   handleFileChange(files: FileList | null) {
@@ -72,7 +79,7 @@ export default class Main extends React.Component<
                 placeholder="Enter User Email Address"
               />
             </div>
-            <div className="title-lay">
+            <div className="second-title-lay">
               <div
                 className="add-btn"
                 onClick={(e) => {
@@ -92,7 +99,7 @@ export default class Main extends React.Component<
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  this.onRemoveBtnClick();
+                  this.onRemoveAllBtnClick();
                 }}
               >
                 <i className="fa fa-trash remove-icon"></i>
@@ -118,7 +125,9 @@ export default class Main extends React.Component<
                       image={image}
                       key={uuidv4()}
                       //   onImageClick={() => {}}
-                      onCancelClick={() => {}}
+                      onCancelClick={() => {
+                        this.onRemoveBtnClick(index);
+                      }}
                     />
                   );
                 })}
