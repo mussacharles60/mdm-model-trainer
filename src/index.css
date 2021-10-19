@@ -11,3 +11,15 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.mdm-theme {
+  --color-pri: rgb(33, 146, 221);
+  --color-sec: rgb(0, 115, 192);
+  --color-act: rgb(128, 204, 255);
+  --color-bg: rgb(226, 226, 226);
+  --color-bg-sec: rgb(252, 252, 252);
+}
+
+.mdm-shadow {
+  box-shadow: 0 1px 4px 1px rgba(110, 110, 110, 0.829);
+}
