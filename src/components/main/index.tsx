@@ -20,6 +20,7 @@ export default class Main extends React.Component<
     this.onUserIdChanged = this.onUserIdChanged.bind(this);
     this.onAddBtnClick = this.onAddBtnClick.bind(this);
     this.handleFileChange = this.handleFileChange.bind(this);
+    this.onRemoveBtnClick = this.onRemoveBtnClick.bind(this);
   }
 
   onUserIdChanged(event: any) {
@@ -31,6 +32,10 @@ export default class Main extends React.Component<
     if (inputFile) {
       inputFile.click();
     }
+  }
+
+  onRemoveBtnClick() {
+    this.setState({ input_images: [] });
   }
 
   handleFileChange(files: FileList | null) {
@@ -68,7 +73,6 @@ export default class Main extends React.Component<
               />
             </div>
             <div className="title-lay">
-              <span>Add User's Photos</span>
               <div
                 className="add-btn"
                 onClick={(e) => {
@@ -78,7 +82,21 @@ export default class Main extends React.Component<
                 }}
               >
                 <i className="fa fa-plus add-icon"></i>
-                <span>Add</span>
+                <span>Add User's Photos</span>
+              </div>
+              <div
+                className="remove-btn"
+                style={{
+                  display: this.state.input_images.length > 0 ? "flex" : "none",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  this.onRemoveBtnClick();
+                }}
+              >
+                <i className="fa fa-trash remove-icon"></i>
+                <span>Remove All Photos</span>
               </div>
             </div>
             <div className="images-main-lay">
@@ -99,7 +117,7 @@ export default class Main extends React.Component<
                     <ImageInput
                       image={image}
                       key={uuidv4()}
-                      onImageClick={() => {}}
+                      //   onImageClick={() => {}}
                       onCancelClick={() => {}}
                     />
                   );
@@ -122,7 +140,7 @@ export default class Main extends React.Component<
 interface ImageInputInterface {
   image: string;
   key: string;
-  onImageClick(): void;
+  //   onImageClick(): void;
   onCancelClick(): void;
 }
 
@@ -130,6 +148,7 @@ const ImageInput = (props: ImageInputInterface) => {
   return (
     <div className="img-view-cont">
       <img className="img-input" alt="..." src={props.image} />
+      <div className="img-remove-btn">Click To Remove</div>
     </div>
   );
 };

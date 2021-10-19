@@ -14,7 +14,9 @@ code {
 
 .mdm-theme {
   --color-pri: rgb(33, 146, 221);
+  --color-pri-red: rgb(221, 33, 96);
   --color-pri-dip: rgb(26, 51, 194);
+  --color-pri-red-dip: rgb(194, 26, 26);
   --color-sec: rgb(0, 115, 192);
   --color-act: rgb(128, 204, 255);
   --color-bg: rgb(226, 226, 226);
