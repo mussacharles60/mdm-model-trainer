@@ -1,6 +1,6 @@
 import React from "react";
 import "./index.css";
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 export default class Main extends React.Component<
   {},
@@ -68,7 +68,7 @@ export default class Main extends React.Component<
               />
             </div>
             <div className="title-lay">Add User's Photos</div>
-            <div className="images-lay">
+            <div className="images-main-lay">
               <input
                 hidden={true}
                 multiple={true}
@@ -90,9 +90,18 @@ export default class Main extends React.Component<
                   }}
                 ></i>
               </div>
-              {this.state.input_images.map((image: string) => {
-                  return <ImageInput image={image} key={uuidv4()}/>
-              })}
+              <div className="images-lay">
+                {this.state.input_images.map((image: string, index: number) => {
+                  return (
+                    <ImageInput
+                      image={image}
+                      key={uuidv4()}
+                      onImageClick={() => {}}
+                      onCancelClick={() => {}}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
           <div className="trainer-lay mdm-shadow">
@@ -108,8 +117,10 @@ export default class Main extends React.Component<
 }
 
 interface ImageInputInterface {
-    image: string, 
-    key: string
+  image: string;
+  key: string;
+  onImageClick(): void;
+  onCancelClick(): void;
 }
 
 const ImageInput = (props: ImageInputInterface) => {
