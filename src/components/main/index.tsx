@@ -157,7 +157,16 @@ const ImageInput = (props: ImageInputInterface) => {
   return (
     <div className="img-view-cont">
       <img className="img-input" alt="..." src={props.image} />
-      <div className="img-remove-btn">Click To Remove</div>
+      <div
+        className="img-remove-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          props.onCancelClick();
+        }}
+      >
+        Click To Remove
+      </div>
     </div>
   );
 };
