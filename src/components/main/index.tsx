@@ -132,10 +132,12 @@ export default class Main extends React.Component<
                   );
                 })}
               </div>
-              <div className="no-images-lay"
-               style={{
-                display: this.state.input_images.length > 0 ? "none" : "flex",
-              }}>
+              <div
+                className="no-images-lay"
+                style={{
+                  display: this.state.input_images.length > 0 ? "none" : "flex",
+                }}
+              >
                 <img
                   src={require("../../media/images/no-image.jpg").default}
                   alt="..."
@@ -145,6 +147,9 @@ export default class Main extends React.Component<
           </div>
           <div className="trainer-lay mdm-shadow">
             <div className="title-lay">Train Model</div>
+            <div className="trainer-cont">
+              <div className="trainer-btn">Start To Train</div>
+            </div>
           </div>
           <div className="output-lay mdm-shadow">
             <div className="title-lay">Export User's Model</div>

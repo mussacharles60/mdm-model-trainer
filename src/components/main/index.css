@@ -45,6 +45,8 @@
   background-color: var(--color-bg-sec);
   display: flex;
   flex-direction: column;
+  /* justify-content: center;
+  align-items: center; */
 }
 
 .output-lay {
@@ -233,4 +235,38 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.trainer-lay .trainer-cont {
+  width: 100%;
+  height: calc(100% - 30px);
+  display: flex;
+  flex-direction: column;
+  /* justify-content: center; */
+  align-items: center;
+}
+
+.trainer-lay .trainer-btn {
+  width: auto;
+  height: auto;
+  max-width: 100px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-color: var(--color-act);
+  border-radius: 8px;
+  border-width: 1px;
+  font-size: 16px;
+  right: 0;
+  margin: 16px;
+  padding: 4px 8px 4px 8px;
+  /* box-shadow: 0 1px 2px 1px rgba(121, 75, 75, 0.829); */
+  cursor: pointer;
+  color: #fff;
+  background-color: var(--color-pri);
+}
+
+.trainer-lay .trainer-btn:hover {
+  background-color: var(--color-pri-dip);
 }
