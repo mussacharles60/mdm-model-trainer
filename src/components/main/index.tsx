@@ -7,6 +7,7 @@ export default class Main extends React.Component<
   {
     user_id: string;
     input_images: Array<string>;
+    is_training_process: boolean;
   }
 > {
   constructor(props: any) {
@@ -15,6 +16,7 @@ export default class Main extends React.Component<
     this.state = {
       user_id: "",
       input_images: [],
+      is_training_process: false,
     };
 
     this.onUserIdChanged = this.onUserIdChanged.bind(this);
@@ -29,6 +31,7 @@ export default class Main extends React.Component<
   }
 
   onAddBtnClick() {
+    if (this.state.is_training_process) return;
     const inputFile = document.getElementById("input-file");
     if (inputFile) {
       inputFile.click();
@@ -36,10 +39,12 @@ export default class Main extends React.Component<
   }
 
   onRemoveAllBtnClick() {
+    if (this.state.is_training_process) return;
     this.setState({ input_images: [] });
   }
 
   onRemoveBtnClick(index: number) {
+    if (this.state.is_training_process) return;
     const images = this.state.input_images;
     images.splice(index, 1);
     this.setState({ input_images: images });
@@ -148,8 +153,29 @@ export default class Main extends React.Component<
           <div className="trainer-lay mdm-shadow">
             <div className="title-lay">Train Model</div>
             <div className="trainer-cont">
-              <div className="trainer-btn">Start To Train</div>
-              <i className="las la-spinner la-spin progress-icon"></i>
+              <div
+                className={
+                  this.state.input_images.length > 0
+                    ? "trainer-btn btn-active"
+                    : "trainer-btn btn-deactive"
+                }
+              >
+                Start To Train
+              </div>
+              <i
+                className="las la-spinner la-spin progress-icon"
+                style={{
+                  display: this.state.is_training_process ? "flex" : "none",
+                }}
+              ></i>
+              <span
+                style={{
+                  marginTop: "16px",
+                  display: this.state.is_training_process ? "flex" : "none",
+                }}
+              >
+                Processing please wait...
+              </span>
             </div>
           </div>
           <div className="output-lay mdm-shadow">
