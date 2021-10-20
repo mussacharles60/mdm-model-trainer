@@ -149,6 +149,7 @@ export default class Main extends React.Component<
             <div className="title-lay">Train Model</div>
             <div className="trainer-cont">
               <div className="trainer-btn">Start To Train</div>
+              <i className="las la-spinner la-spin progress-icon"></i>
             </div>
           </div>
           <div className="output-lay mdm-shadow">

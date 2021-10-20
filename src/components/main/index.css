@@ -242,8 +242,9 @@
   height: calc(100% - 30px);
   display: flex;
   flex-direction: column;
-  /* justify-content: center; */
+  justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .trainer-lay .trainer-btn {
@@ -259,14 +260,23 @@
   border-width: 1px;
   font-size: 16px;
   right: 0;
-  margin: 16px;
+  margin: 16px auto 16px auto;
   padding: 4px 8px 4px 8px;
   /* box-shadow: 0 1px 2px 1px rgba(121, 75, 75, 0.829); */
   cursor: pointer;
   color: #fff;
   background-color: var(--color-pri);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 }
 
 .trainer-lay .trainer-btn:hover {
   background-color: var(--color-pri-dip);
+}
+
+.trainer-lay .trainer-cont .progress-icon {
+  font-size: 50px;
 }
