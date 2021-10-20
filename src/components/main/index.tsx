@@ -132,6 +132,15 @@ export default class Main extends React.Component<
                   );
                 })}
               </div>
+              <div className="no-images-lay"
+               style={{
+                display: this.state.input_images.length > 0 ? "none" : "flex",
+              }}>
+                <img
+                  src={require("../../media/images/no-image.jpg").default}
+                  alt="..."
+                />
+              </div>
             </div>
           </div>
           <div className="trainer-lay mdm-shadow">

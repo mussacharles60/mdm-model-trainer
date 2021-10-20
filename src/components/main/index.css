@@ -16,7 +16,7 @@
 
 .main-lay {
   width: 100%;
-  height: 500px;
+  height: 600px;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -97,13 +97,13 @@
 }
 
 .user-id-lay .user-id-input {
-  width: calc(100% - 70px);
+  width: calc(100% - 80px);
   background: inherit;
   border-color: var(--color-act);
   border-radius: 8px;
   border-width: 1px;
   letter-spacing: 2px;
-  padding: 12px 20px;
+  padding: 8px 12px;
   box-sizing: border-box;
   border-radius: 8px;
   margin: 8px 0 8px 0;
@@ -111,7 +111,7 @@
 
 .input-lay .images-main-lay {
   width: 100%;
-  height: calc(100% - 90px);
+  height: calc(100% - 150px);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -137,7 +137,7 @@
   padding: 4px 8px 4px 8px;
   /* box-shadow: 0 1px 2px 1px rgba(121, 75, 75, 0.829); */
   cursor: pointer;
-  color: #000;
+  color: #fff;
 }
 
 .input-lay .add-btn {
@@ -150,14 +150,13 @@
 
 .input-lay .add-btn span,
 .input-lay .remove-btn span {
-  /* color: #000; */
   margin: 0 0 0 8px;
 }
 
-.input-lay .add-btn:hover,
+/* .input-lay .add-btn:hover,
 .input-lay .remove-btn:hover {
   color: #fff;
-}
+} */
 
 .input-lay .add-btn:hover {
   background-color: var(--color-pri-dip);
@@ -194,6 +193,7 @@
   height: 100%;
   object-fit: cover;
   image-rendering: pixelated;
+  transition: transform 0.2s;
 }
 
 .img-view-cont .img-remove-btn {
@@ -217,10 +217,19 @@
   opacity: 1;
 }
 
-.img-view-cont .img-remove-btn:hover > .img-input {
-  -moz-transform: scale(0.5);
+.img-view-cont .img-remove-btn:hover .img-input {
+  transform: scale(1.5);
+  /* -moz-transform: scale(0.5);
   -webkit-transform: scale(0.5);
   -o-transform: scale(0.5);
   -ms-transform: scale(0.5);
-  transform: scale(0.5);
+  transform: scale(0.5); */
+}
+
+.no-images-lay {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
