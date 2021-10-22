@@ -359,8 +359,10 @@
   background-color: var(--color-sec-txt-cont);
 }
 
-.trainer-lay .trainer-cont .progress-icon {
+ .progress-icon {
   font-size: 50px;
+  position: absolute;
+  top: 50px;
 }
 
 .error-txt {

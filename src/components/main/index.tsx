@@ -101,7 +101,7 @@ export default class Main extends React.Component<
     const imgElement = document.getElementById("input-img");
     const canvasElement = document.getElementById("canvas");
     const outCanvasElement = document.getElementById("canvas-output");
-    // global.HTMLImageElement = window.HTMLImageElement;
+    global.HTMLImageElement = window.HTMLImageElement;
     if (
       imgElement &&
       canvasElement &&
