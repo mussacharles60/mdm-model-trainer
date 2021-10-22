@@ -71,29 +71,36 @@ export default class Main extends React.Component<
   private onStartSessionBtnClick() {
     if (this.state.is_running_process) return;
     if (this.state.session_id.length === 0) return;
-    this.setState({ is_running_process: true });
+    this.setState({ is_running_process: true, is_initializing: true });
     this.queSession(this.state.session_id);
   }
 
   private queSession(session_id: string) {
-    this.mdmServer.getQueryPhoto(session_id).then((result) => {
-      console.log("result: ", result);
-      if (
-        result &&
-        result.success &&
-        result.success.data &&
-        result.success.data.length > 0
-      ) {
-        const device: DeviceInfo | null = result.success.data[0];
-        if (device && this.state.is_running_process) {
-          this.processResult(device);
+    this.mdmServer
+      .getQueryPhoto(session_id)
+      .then((result) => {
+        // console.log("result: ", result);
+        this.setState({ is_initializing: false });
+        if (
+          result &&
+          result.success &&
+          result.success.data &&
+          result.success.data.length > 0
+        ) {
+          const device: DeviceInfo | null = result.success.data[0];
+          if (device && this.state.is_running_process) {
+            this.processResult(device);
+          } else {
+            this.reQueSession();
+          }
         } else {
           this.reQueSession();
         }
-      } else {
-        this.reQueSession();
-      }
-    });
+      })
+      .catch((err) => {
+        this.setState({ is_initializing: false });
+        console.log(err);
+      });
   }
 
   private processResult(device: DeviceInfo) {
@@ -129,6 +136,10 @@ export default class Main extends React.Component<
           imgElement.getBoundingClientRect().width;
         (canvasElement as HTMLCanvasElement).height =
           imgElement.getBoundingClientRect().height;
+        (outCanvasElement as HTMLCanvasElement).width =
+          imgElement.getBoundingClientRect().width;
+        (outCanvasElement as HTMLCanvasElement).height =
+          imgElement.getBoundingClientRect().height;
         const ctx = (canvasElement as HTMLCanvasElement).getContext("2d");
         if (ctx)
           ctx.drawImage(
@@ -137,6 +148,14 @@ export default class Main extends React.Component<
             0,
             (canvasElement as HTMLCanvasElement).width,
             (canvasElement as HTMLCanvasElement).height
+          );
+        const ctx_up = (outCanvasElement as HTMLCanvasElement).getContext("2d");
+        if (ctx_up)
+          ctx_up.clearRect(
+            0,
+            0,
+            (outCanvasElement as HTMLCanvasElement).width,
+            (outCanvasElement as HTMLCanvasElement).height
           );
         const detectionResult = await faceapi
           .detectAllFaces(canvasElement as HTMLCanvasElement)
@@ -177,7 +196,11 @@ export default class Main extends React.Component<
           // const descriptor = singleResult[0];
           const faceMatcher = new faceapi.FaceMatcher(detectionResult);
           // const bestMatch = faceMatcher.findBestMatch(singleResult.descriptor);
-          console.log(faceMatcher); //output
+          console.log("faceMatcher: ", faceMatcher); //output
+          detectionResult.forEach((fd) => {
+            const bestMatch = faceMatcher.findBestMatch(fd.descriptor);
+            console.log("bestMatch: ", bestMatch.toString());
+          });
           this.reQueSession();
         } else {
           this.reQueSession();
@@ -199,7 +222,7 @@ export default class Main extends React.Component<
 
   private onStopSessionBtnClick() {
     // if (this.sessionInterval) clearInterval(this.sessionInterval);
-    this.setState({ is_running_process: false });
+    this.setState({ is_running_process: false, is_initializing: false });
   }
 
   render() {
@@ -224,36 +247,40 @@ export default class Main extends React.Component<
               type="text"
               placeholder="Enter Enter Session Id (without space)"
             />
-            <div className="btns-lay">
-              <div
-                className="start-btn"
-                style={{
-                  display: this.state.is_running_process ? "none" : "flex",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onStartSessionBtnClick();
-                }}
-              >
-                {/* <i className="fa fa-plus add-icon"></i> */}
-                <span>Start Session</span>
+            {!this.state.is_initializing && (
+              <div className="btns-lay">
+                {this.state.session_id.length > 0 && (
+                  <div
+                    className="start-btn"
+                    style={{
+                      display: this.state.is_running_process ? "none" : "flex",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      this.onStartSessionBtnClick();
+                    }}
+                  >
+                    {/* <i className="fa fa-plus add-icon"></i> */}
+                    <span>Start Session</span>
+                  </div>
+                )}
+                <div
+                  className="stop-btn"
+                  style={{
+                    display: this.state.is_running_process ? "flex" : "none",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    this.onStopSessionBtnClick();
+                  }}
+                >
+                  {/* <i className="fa fa-trash stop-icon"></i> */}
+                  <span>Stop Session</span>
+                </div>
               </div>
-              <div
-                className="stop-btn"
-                style={{
-                  display: this.state.is_running_process ? "flex" : "none",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onStopSessionBtnClick();
-                }}
-              >
-                {/* <i className="fa fa-trash stop-icon"></i> */}
-                <span>Stop Session</span>
-              </div>
-            </div>
+            )}
           </div>
           <div className="process-lay mdm-shadow">
             <div className="title-lay">Process</div>
@@ -271,6 +298,7 @@ export default class Main extends React.Component<
               </div>
               <div className="output-lay">
                 <div className="image-frame">
+                  <canvas className="img-input" id="canvas" />
                   <canvas
                     className="img-input canvas-output"
                     id="canvas-output"
