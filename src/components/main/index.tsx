@@ -1,9 +1,15 @@
 import React from "react";
 import "./index.css";
-import { v4 as uuidv4 } from "uuid";
+// import { v4 as uuidv4 } from "uuid";
 // import * as fr from "face-recognition";
 import * as faceapi from "face-api.js";
+// import fetch from "node-fetch";
 import MDMServer, { photo_url } from "../../service";
+// import '../../service/faceEnvWorkerPatch';
+
+// const Canvas = (props: any) => <canvas {...props}/>
+const MODEL_URL = "/models";
+const minConfidence = 0.6;
 
 export default class Main extends React.Component<
   {},
@@ -20,12 +26,14 @@ export default class Main extends React.Component<
   // private recognizer: fr.FaceRecognizer = fr.FaceRecognizer();
   private mdmServer: MDMServer = new MDMServer();
   private sessionInterval: any = null;
+  private canvas: any = React.createRef();
+  private fullFaceDescriptions: any = null;
 
   constructor(props: any) {
     super(props);
 
     this.state = {
-      session_id: "",
+      session_id: "mdm_session_02",
       input_image: "",
       input_images: [],
       is_running_process: false,
@@ -38,6 +46,24 @@ export default class Main extends React.Component<
     this.onRemoveAllBtnClick = this.onRemoveAllBtnClick.bind(this);
     this.onRemoveBtnClick = this.onRemoveBtnClick.bind(this);
     this.onStartSessionBtnClick = this.onStartSessionBtnClick.bind(this);
+    this.onStopSessionBtnClick = this.onStopSessionBtnClick.bind(this);
+  }
+
+  async componentDidMount() {
+    // faceapi.env.monkeyPatch({ fetch: fetch as any });
+    await this.loadModels();
+    // faceapi.env.setEnv(faceapi.env.createNodejsEnv());
+
+    // faceapi.env.monkeyPatch({
+    //   Canvas: OffscreenCanvas,
+    //   createCanvasElement: () => {
+    //     return new OffscreenCanvas(480, 270);
+    //   },
+    // });
+  }
+
+  componentWillUnmount() {
+    if (this.sessionInterval) clearInterval(this.sessionInterval);
   }
 
   onSessionIdChanged(event: any) {
@@ -83,45 +109,110 @@ export default class Main extends React.Component<
   private onStartSessionBtnClick() {
     if (this.state.is_running_process) return;
     if (this.state.session_id.length === 0) return;
-    if (this.sessionInterval) clearInterval(this.sessionInterval);
-    this.setState({ is_running_process: true})
+    // if (this.sessionInterval) clearInterval(this.sessionInterval);
+    this.setState({ is_running_process: true });
     this.queSession(this.state.session_id);
+  }
 
-    setInterval(() => this.queSession(this.state.session_id), 5000);
-
-    // const user_images: fr.ImageRGB[] = [];
-    // this.state.input_images.forEach((input_image) => {
-    //   user_images.push(fr.loadImage(input_image));
-    // });
-    // this.recognizer.addFaces(user_images, this.state.session_id, 15);
+  async loadModels() {
+    return Promise.all([
+      faceapi.loadTinyFaceDetectorModel(MODEL_URL),
+      faceapi.loadSsdMobilenetv1Model(MODEL_URL),
+      faceapi.loadFaceLandmarkModel(MODEL_URL),
+      faceapi.loadFaceDetectionModel(MODEL_URL),
+      faceapi.loadFaceRecognitionModel(MODEL_URL),
+    ]);
   }
 
   private queSession(session_id: string) {
     this.mdmServer.getQueryPhoto(session_id).then((result) => {
       console.log("result: ", result);
-      if (result && result.success && result.success.data && result.success.data.length > 0) {
+      if (
+        result &&
+        result.success &&
+        result.success.data &&
+        result.success.data.length > 0
+      ) {
         const device: DeviceInfo | null = result.success.data[0];
         if (device) {
-          const image_url = photo_url + device.sessionId + "/" + device.fileName;
-          this.setState({ input_image: image_url });
+          const image_url =
+            photo_url + device.sessionId + "/" + device.fileName;
+
+          const imgElement = document.getElementById("input-img");
+          const canvasElement = document.getElementById("canvas");
+          // this.drawHTMLImage(this.canvas.current, testImageHTML, 296, 296);
+          global.HTMLImageElement = window.HTMLImageElement;
+          // var image = new Image();
+          if (
+            imgElement &&
+            canvasElement &&
+            (imgElement as HTMLImageElement) &&
+            (canvasElement as HTMLCanvasElement)
+          ) {
+            (imgElement as HTMLImageElement).onload = async () => {
+              //
+              (canvasElement as HTMLCanvasElement).width =
+                imgElement.getBoundingClientRect().width;
+              (canvasElement as HTMLCanvasElement).height =
+                imgElement.getBoundingClientRect().height;
+              const ctx = (canvasElement as HTMLCanvasElement).getContext("2d");
+              if (ctx)
+                ctx.drawImage(
+                  imgElement as HTMLImageElement,
+                  0,
+                  0,
+                  (canvasElement as HTMLCanvasElement).width,
+                  (canvasElement as HTMLCanvasElement).height
+                );
+              //
+              // this.fullFaceDescriptions = await faceapi.allFaces(
+              //   canvasElement as HTMLCanvasElement,
+              //   minConfidence
+              // );
+              setTimeout(async () => {
+                const singleResult = await faceapi
+                  .detectSingleFace(canvasElement as HTMLCanvasElement)
+                  .withFaceLandmarks()
+                  .withFaceExpressions()
+                  .withAgeAndGender()
+                  .withFaceDescriptor();
+                console.log(singleResult);
+                if (singleResult) {
+                  const faceMatcher = new faceapi.FaceMatcher(singleResult);
+                  // const bestMatch = faceMatcher.findBestMatch(singleResult.descriptor);
+                  console.log(faceMatcher.toString()); //output
+                  setTimeout(() => {
+                    if (this.state.is_running_process)
+                      this.queSession(this.state.session_id);
+                  }, 3000);
+                } else {
+                  setTimeout(() => {
+                    if (this.state.is_running_process)
+                      this.queSession(this.state.session_id);
+                  }, 3000);
+                }
+              }, 1000);
+            };
+            this.setState({ input_image: image_url });
+          }
+        } else {
+          setTimeout(() => {
+            if (this.state.is_running_process)
+              this.queSession(this.state.session_id);
+          }, 3000);
         }
+      } else {
+        setTimeout(() => {
+          if (this.state.is_running_process)
+            this.queSession(this.state.session_id);
+        }, 3000);
       }
-    })
+    });
   }
 
-  // async loadModels() {
-  //   const modelsPath = require("../../models");
-  //   return Promise.all([
-  //     faceapi.nets.tinyFaceDetector.loadFromUri(modelsPath),
-  //     faceapi.nets.faceLandmark68Net.loadFromUri(modelsPath),
-  //     faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelsPath),
-  //     faceapi.nets.faceRecognitionNet.loadFromUri(modelsPath),
-  //     faceapi.nets.ssdMobilenetv1.loadFromUri(modelsPath),
-  //   ]);
-  // }
-
-  componentWillUnmount() {
-    if (this.sessionInterval) clearInterval(this.sessionInterval);
+  private onStopSessionBtnClick() {
+    // if (this.sessionInterval) clearInterval(this.sessionInterval);
+    this.setState({ is_running_process: false });
   }
 
   render() {
@@ -165,7 +256,7 @@ export default class Main extends React.Component<
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  this.onRemoveAllBtnClick();
+                  this.onStopSessionBtnClick();
                 }}
               >
                 {/* <i className="fa fa-trash stop-icon"></i> */}
@@ -181,11 +272,22 @@ export default class Main extends React.Component<
                   <img
                     className="img-input"
                     alt=""
+                    id="input-img"
+                    crossOrigin="anonymous"
                     src={this.state.input_image}
                   />
                 </div>
               </div>
-              <div className="output-lay"></div>
+              <div className="output-lay">
+                <div className="image-frame">
+                  <canvas
+                    className="img-input"
+                    id="canvas"
+                    // width={296}
+                    // height={296}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -206,27 +308,27 @@ interface DeviceInfo {
   dateCreated: number;
 }
 
-interface ImageInputInterface {
-  image: string;
-  key: string;
-  //   onImageClick(): void;
-  onCancelClick(): void;
-}
+// interface ImageInputInterface {
+//   image: string;
+//   key: string;
+//   //   onImageClick(): void;
+//   onCancelClick(): void;
+// }
 
-const ImageInput = (props: ImageInputInterface) => {
-  return (
-    <div className="img-view-cont">
-      <img className="img-input" alt="..." src={props.image} />
-      <div
-        className="img-remove-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          props.onCancelClick();
-        }}
-      >
-        Click To Remove
-      </div>
-    </div>
-  );
-};
+// const ImageInput = (props: ImageInputInterface) => {
+//   return (
+//     <div className="img-view-cont">
+//       <img className="img-input" alt="..." src={props.image} />
+//       <div
+//         className="img-remove-btn"
+//         onClick={(e) => {
+//           e.stopPropagation();
+//           e.preventDefault();
+//           props.onCancelClick();
+//         }}
+//       >
+//         Click To Remove
+//       </div>
+//     </div>
+//   );
+// };

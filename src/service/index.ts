@@ -6,7 +6,7 @@ const api_key = "jZ42J20n9PEIY7rvIvQMoCYxeJzssmtX";
 export const photo_url = host + "/uploads/";
 
 export default class MDMServer {
-  constructor() {}
+  // constructor() {}
   public getQueryPhoto(session_id: string): Promise<any> {
     const request = {
       key: api_key,
