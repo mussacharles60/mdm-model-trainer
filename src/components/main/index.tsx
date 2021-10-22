@@ -3,45 +3,49 @@ import "./index.css";
 import { v4 as uuidv4 } from "uuid";
 // import * as fr from "face-recognition";
 import * as faceapi from "face-api.js";
-import MDMServer from "../../service";
+import MDMServer, { photo_url } from "../../service";
 
 export default class Main extends React.Component<
   {},
   {
-    user_id: string;
+    session_id: string;
+    input_image: string;
+
     input_images: Array<string>;
-    is_training_process: boolean;
+    is_running_process: boolean;
     error: string | null;
   }
 > {
   // private user_images: fr.ImageRGB[] = [];
   // private recognizer: fr.FaceRecognizer = fr.FaceRecognizer();
   private mdmServer: MDMServer = new MDMServer();
+  private sessionInterval: any = null;
 
   constructor(props: any) {
     super(props);
 
     this.state = {
-      user_id: "",
+      session_id: "",
+      input_image: "",
       input_images: [],
-      is_training_process: false,
+      is_running_process: false,
       error: null,
     };
 
-    this.onUserIdChanged = this.onUserIdChanged.bind(this);
+    this.onSessionIdChanged = this.onSessionIdChanged.bind(this);
     this.onAddBtnClick = this.onAddBtnClick.bind(this);
     this.handleFileChange = this.handleFileChange.bind(this);
     this.onRemoveAllBtnClick = this.onRemoveAllBtnClick.bind(this);
     this.onRemoveBtnClick = this.onRemoveBtnClick.bind(this);
-    this.onStartTrainBtnClick = this.onStartTrainBtnClick.bind(this);
+    this.onStartSessionBtnClick = this.onStartSessionBtnClick.bind(this);
   }
 
-  onUserIdChanged(event: any) {
-    this.setState({ user_id: event.target.value });
+  onSessionIdChanged(event: any) {
+    this.setState({ session_id: event.target.value });
   }
 
   onAddBtnClick() {
-    if (this.state.is_training_process) return;
+    if (this.state.is_running_process) return;
     const inputFile = document.getElementById("input-file");
     if (inputFile) {
       inputFile.click();
@@ -49,12 +53,12 @@ export default class Main extends React.Component<
   }
 
   onRemoveAllBtnClick() {
-    if (this.state.is_training_process) return;
+    if (this.state.is_running_process) return;
     this.setState({ input_images: [] });
   }
 
   onRemoveBtnClick(index: number) {
-    if (this.state.is_training_process) return;
+    if (this.state.is_running_process) return;
     const images = this.state.input_images;
     images.splice(index, 1);
     this.setState({ input_images: images });
@@ -76,25 +80,48 @@ export default class Main extends React.Component<
     }
   }
 
-  async onStartTrainBtnClick() {
-    if (this.state.is_training_process) return;
-    if (this.state.user_id.length === 0) return;
+  private onStartSessionBtnClick() {
+    if (this.state.is_running_process) return;
+    if (this.state.session_id.length === 0) return;
+    if (this.sessionInterval) clearInterval(this.sessionInterval);
+    this.setState({ is_running_process: true})
+    this.queSession(this.state.session_id);
+
+    setInterval(() => this.queSession(this.state.session_id), 5000);
+
     // const user_images: fr.ImageRGB[] = [];
     // this.state.input_images.forEach((input_image) => {
     //   user_images.push(fr.loadImage(input_image));
     // });
-    // this.recognizer.addFaces(user_images, this.state.user_id, 15);
+    // this.recognizer.addFaces(user_images, this.state.session_id, 15);
   }
 
-  async loadModels() {
-    const modelsPath = require("../../models");
-    return Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(modelsPath),
-      faceapi.nets.faceLandmark68Net.loadFromUri(modelsPath),
-      faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelsPath),
-      faceapi.nets.faceRecognitionNet.loadFromUri(modelsPath),
-      faceapi.nets.ssdMobilenetv1.loadFromUri(modelsPath),
-    ]);
+  private queSession(session_id: string) {
+    this.mdmServer.getQueryPhoto(session_id).then((result) => {
+      console.log("result: ", result);
+      if (result && result.success && result.success.data && result.success.data.length > 0) {
+        const device: DeviceInfo | null = result.success.data[0];
+        if (device) {
+          const image_url = photo_url + device.sessionId + "/" + device.fileName;
+          this.setState({ input_image: image_url });
+        }
+      }
+    })
+  }
+
+  // async loadModels() {
+  //   const modelsPath = require("../../models");
+  //   return Promise.all([
+  //     faceapi.nets.tinyFaceDetector.loadFromUri(modelsPath),
+  //     faceapi.nets.faceLandmark68Net.loadFromUri(modelsPath),
+  //     faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelsPath),
+  //     faceapi.nets.faceRecognitionNet.loadFromUri(modelsPath),
+  //     faceapi.nets.ssdMobilenetv1.loadFromUri(modelsPath),
+  //   ]);
+  // }
+
+  componentWillUnmount() {
+    if (this.sessionInterval) clearInterval(this.sessionInterval);
   }
 
   render() {
@@ -102,161 +129,38 @@ export default class Main extends React.Component<
       <div className="mdm-main">
         <div className="header-main"></div>
         <div className="main-lay">
-          <div className="input-lay mdm-shadow">
-            <div className="title-lay">Input User's Details</div>
-            <div className="user-id-lay">
-              <span className="user-id-title">User Id</span>
-              <input
-                className="user-id-input input"
-                name="email"
-                value={this.state.user_id}
-                onChange={this.onUserIdChanged}
-                type="text"
-                placeholder="Enter User Email Address"
-              />
-            </div>
-            <div className="second-title-lay">
+          <div className="admin-lay mdm-shadow">
+            <div className="title-lay">Session</div>
+            {/* <div className="session-id-lay"> */}
+            <span className="session-id-title">Session Id</span>
+            <input
+              className="session-id-input input"
+              name="text"
+              value={this.state.session_id}
+              onChange={this.onSessionIdChanged}
+              type="text"
+              placeholder="Enter Enter Session Id (without space)"
+            />
+            {/* </div> */}
+            <div className="btns-lay">
               <div
-                className="add-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onAddBtnClick();
-                }}
-              >
-                <i className="fa fa-plus add-icon"></i>
-                <span>Add User's Photos</span>
-              </div>
-              <div
-                className="remove-btn"
+                className="start-btn"
                 style={{
-                  display: this.state.input_images.length > 0 ? "flex" : "none",
+                  display: this.state.is_running_process ? "none" : "flex",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  this.onRemoveAllBtnClick();
+                  this.onStartSessionBtnClick();
                 }}
               >
-                <i className="fa fa-trash remove-icon"></i>
-                <span>Remove All Photos</span>
-              </div>
-            </div>
-            <div className="images-main-lay">
-              <input
-                hidden={true}
-                multiple={true}
-                type="file"
-                id="input-file"
-                accept="jpg, .jpeg, .png"
-                onChange={(e) => {
-                  e.preventDefault();
-                  this.handleFileChange(e.target.files);
-                }}
-              />
-              <div className="images-lay">
-                {this.state.input_images.map((image: string, index: number) => {
-                  return (
-                    <ImageInput
-                      image={image}
-                      key={uuidv4()}
-                      //   onImageClick={() => {}}
-                      onCancelClick={() => {
-                        this.onRemoveBtnClick(index);
-                      }}
-                    />
-                  );
-                })}
+                {/* <i className="fa fa-plus add-icon"></i> */}
+                <span>Start Session</span>
               </div>
               <div
-                className="no-images-lay"
+                className="stop-btn"
                 style={{
-                  display: this.state.input_images.length > 0 ? "none" : "flex",
-                }}
-              >
-                <img
-                  src={require("../../media/images/no-image.jpg").default}
-                  alt="..."
-                />
-              </div>
-            </div>
-          </div>
-          <div className="trainer-lay mdm-shadow">
-            <div className="title-lay">Train Model</div>
-            <div className="trainer-cont">
-              <div
-                className={
-                  this.state.input_images.length > 0
-                    ? "trainer-btn btn-active"
-                    : "trainer-btn btn-deactive"
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onStartTrainBtnClick();
-                }}
-              >
-                Start To Train
-              </div>
-              <i
-                className="las la-spinner la-spin progress-icon"
-                style={{
-                  display: this.state.is_training_process ? "flex" : "none",
-                }}
-              ></i>
-              <span
-                style={{
-                  marginTop: "16px",
-                  display: this.state.is_training_process ? "flex" : "none",
-                }}
-              >
-                Processing please wait...
-              </span>
-              <span
-                className="error-txt"
-                style={{
-                  marginTop: "16px",
-                  display: this.state.error ? "flex" : "none",
-                }}
-              >
-                Processing please wait...
-              </span>
-            </div>
-          </div>
-          <div className="output-lay mdm-shadow">
-            <div className="title-lay">Export User's Model</div>
-          </div>
-        </div>
-        <div className="main-lay" style={{display: 'none'}}>
-          <div className="input-lay mdm-shadow">
-            <div className="title-lay">Input User's Details</div>
-            <div className="user-id-lay">
-              <span className="user-id-title">User Id</span>
-              <input
-                className="user-id-input input"
-                name="email"
-                value={this.state.user_id}
-                onChange={this.onUserIdChanged}
-                type="text"
-                placeholder="Enter User Email Address"
-              />
-            </div>
-            <div className="second-title-lay">
-              <div
-                className="add-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onAddBtnClick();
-                }}
-              >
-                <i className="fa fa-plus add-icon"></i>
-                <span>Add User's Photos</span>
-              </div>
-              <div
-                className="remove-btn"
-                style={{
-                  display: this.state.input_images.length > 0 ? "flex" : "none",
+                  display: this.state.is_running_process ? "flex" : "none",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -264,93 +168,25 @@ export default class Main extends React.Component<
                   this.onRemoveAllBtnClick();
                 }}
               >
-                <i className="fa fa-trash remove-icon"></i>
-                <span>Remove All Photos</span>
-              </div>
-            </div>
-            <div className="images-main-lay">
-              <input
-                hidden={true}
-                multiple={true}
-                type="file"
-                id="input-file"
-                accept="jpg, .jpeg, .png"
-                onChange={(e) => {
-                  e.preventDefault();
-                  this.handleFileChange(e.target.files);
-                }}
-              />
-              <div className="images-lay">
-                {this.state.input_images.map((image: string, index: number) => {
-                  return (
-                    <ImageInput
-                      image={image}
-                      key={uuidv4()}
-                      //   onImageClick={() => {}}
-                      onCancelClick={() => {
-                        this.onRemoveBtnClick(index);
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              <div
-                className="no-images-lay"
-                style={{
-                  display: this.state.input_images.length > 0 ? "none" : "flex",
-                }}
-              >
-                <img
-                  src={require("../../media/images/no-image.jpg").default}
-                  alt="..."
-                />
+                {/* <i className="fa fa-trash stop-icon"></i> */}
+                <span>Stop Session</span>
               </div>
             </div>
           </div>
-          <div className="trainer-lay mdm-shadow">
-            <div className="title-lay">Train Model</div>
-            <div className="trainer-cont">
-              <div
-                className={
-                  this.state.input_images.length > 0
-                    ? "trainer-btn btn-active"
-                    : "trainer-btn btn-deactive"
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  this.onStartTrainBtnClick();
-                }}
-              >
-                Start To Train
+          <div className="process-lay mdm-shadow">
+            <div className="title-lay">Process</div>
+            <div className="process-cont">
+              <div className="image-lay">
+                <div className="image-frame">
+                  <img
+                    className="img-input"
+                    alt=""
+                    src={this.state.input_image}
+                  />
+                </div>
               </div>
-              <i
-                className="las la-spinner la-spin progress-icon"
-                style={{
-                  display: this.state.is_training_process ? "flex" : "none",
-                }}
-              ></i>
-              <span
-                style={{
-                  marginTop: "16px",
-                  display: this.state.is_training_process ? "flex" : "none",
-                }}
-              >
-                Processing please wait...
-              </span>
-              <span
-                className="error-txt"
-                style={{
-                  marginTop: "16px",
-                  display: this.state.error ? "flex" : "none",
-                }}
-              >
-                Processing please wait...
-              </span>
+              <div className="output-lay"></div>
             </div>
-          </div>
-          <div className="output-lay mdm-shadow">
-            <div className="title-lay">Export User's Model</div>
           </div>
         </div>
       </div>
@@ -358,14 +194,16 @@ export default class Main extends React.Component<
   }
 }
 
-interface Device {
-  sessionId: string;
+interface DeviceInfo {
+  fileName: string;
+  // prefixName: string;
   userId: string;
-  battery: string;
-  charging: boolean;
+  sessionId: string;
   location: string;
+  battery: string;
+  charging: number;
+  checked: number;
   dateCreated: number;
-  checked: boolean;
 }
 
 interface ImageInputInterface {
