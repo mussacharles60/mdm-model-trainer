@@ -209,7 +209,6 @@ export default class Main extends React.Component<
         <div className="main-lay">
           <div className="admin-lay mdm-shadow">
             <div className="title-lay">Session</div>
-            {/* <div className="session-id-lay"> */}
             <i
               className="las la-spinner la-spin progress-icon"
               style={{
@@ -225,7 +224,6 @@ export default class Main extends React.Component<
               type="text"
               placeholder="Enter Enter Session Id (without space)"
             />
-            {/* </div> */}
             <div className="btns-lay">
               <div
                 className="start-btn"
@@ -279,15 +277,10 @@ export default class Main extends React.Component<
                   />
                 </div>
               </div>
-              <div className="output-text-lay">
-                {/* <div className="image-frame">
-                  <canvas
-                    className="img-input"
-                    id="canvas"
-                  />
-                </div> */}
-              </div>
             </div>
+          </div>
+          <div className="output-lay mdm-shadow">
+            <div className="title-lay">Output</div>
           </div>
         </div>
       </div>

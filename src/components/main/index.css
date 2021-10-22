@@ -21,7 +21,7 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  margin: 10px 0 50px 0 ;
+  margin: 10px 0 50px 0;
 }
 
 .admin-lay {
@@ -40,7 +40,7 @@
 }
 
 .process-lay {
-  width: 70%;
+  width: 50%;
   height: 100%;
   margin: 8px;
   border-radius: 8px;
@@ -51,6 +51,21 @@
   flex-direction: column;
   /* justify-content: center;
   align-items: center; */
+  position: relative;
+}
+
+.output-lay {
+  width: 20%;
+  height: 100%;
+  margin: 8px;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: var(--color-act);
+  background-color: var(--color-bg-sec);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   position: relative;
 }
 
@@ -255,7 +270,7 @@
 }
 
 .process-cont .image-lay {
-  width: 30%;
+  width: 50%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -265,7 +280,7 @@
 }
 
 .process-cont .output-lay {
-  width: 30%;
+  width: 50%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -281,7 +296,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: hotpink
+  background-color: hotpink;
 }
 
 .image-frame {
@@ -321,7 +336,7 @@
   left: 0;
 }
 
-.trainer-lay .trainer-btn {
+/* .trainer-lay .trainer-btn {
   width: auto;
   height: auto;
   max-width: 100px;
@@ -341,7 +356,7 @@
   left: 0;
   right: 0;
   z-index: 1;
-}
+} */
 
 .trainer-lay .btn-active {
   cursor: pointer;
@@ -359,7 +374,7 @@
   background-color: var(--color-sec-txt-cont);
 }
 
- .progress-icon {
+.progress-icon {
   font-size: 50px;
   position: absolute;
   top: 50px;
