@@ -25,7 +25,7 @@
 }
 
 .admin-lay {
-  width: 30%;
+  width: 20%;
   height: 100%;
   margin: 8px;
   border-radius: 8px;
@@ -40,7 +40,7 @@
 }
 
 .process-lay {
-  width: 60%;
+  width: 70%;
   height: 100%;
   margin: 8px;
   border-radius: 8px;
@@ -255,7 +255,7 @@
 }
 
 .process-cont .image-lay {
-  width: 50%;
+  width: 30%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -265,7 +265,7 @@
 }
 
 .process-cont .output-lay {
-  width: 50%;
+  width: 30%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -274,8 +274,18 @@
   /* background-color: hotpink */
 }
 
+.process-cont .output-text-lay {
+  width: 40%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: hotpink
+}
+
 .image-frame {
-  width: 50%;
+  width: 70%;
   height: 80%;
   display: flex;
   flex-direction: column;
@@ -283,19 +293,32 @@
   border-radius: 16px;
   border-width: 1px;
   border-color: var(--color-act);
+  position: relative;
 }
 
 .image-frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* image-rendering: pixelated; */
+  image-rendering: pixelated;
 }
 
 .image-frame canvas {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.image-frame .canvas-output {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .trainer-lay .trainer-btn {

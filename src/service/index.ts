@@ -23,10 +23,40 @@ export default class MDMServer {
           responseType: "json",
           data: request,
           headers: {
-            Accept: "application/json",
-            // "Content-Type": "application/x-www-form-urlencoded",
-            // 'cache-control': 'no-cache',
-            // 'pragma': 'no-cache'
+            Accept: "application/json"
+          },
+        })
+          .then((result: any) => {
+            resolve(result.data ? result.data : null);
+          })
+          .catch((err: any) => {
+            console.log("> axios error: ", err.message);
+            reject(err.message);
+          });
+      } catch (e: any) {
+        console.log(e);
+        reject(e);
+      }
+    });
+  }
+
+  public clearQuery(session_id: string): Promise<any> {
+    const request = {
+      key: api_key,
+      action: "delete",
+      sessionId: session_id,
+    };
+
+    return new Promise<void>((resolve, reject) => {
+      try {
+        const url = host + "/api/v1/sessions";
+        axios({
+          url: url,
+          method: "post",
+          responseType: "json",
+          data: request,
+          headers: {
+            Accept: "application/json"
           },
         })
           .then((result: any) => {

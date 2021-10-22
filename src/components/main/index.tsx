@@ -9,7 +9,7 @@ import MDMServer, { photo_url } from "../../service";
 
 // const Canvas = (props: any) => <canvas {...props}/>
 const MODEL_URL = "/models";
-const minConfidence = 0.6;
+// const minConfidence = 0.6;
 
 export default class Main extends React.Component<
   {},
@@ -26,8 +26,6 @@ export default class Main extends React.Component<
   // private recognizer: fr.FaceRecognizer = fr.FaceRecognizer();
   private mdmServer: MDMServer = new MDMServer();
   private sessionInterval: any = null;
-  private canvas: any = React.createRef();
-  private fullFaceDescriptions: any = null;
 
   constructor(props: any) {
     super(props);
@@ -50,16 +48,8 @@ export default class Main extends React.Component<
   }
 
   async componentDidMount() {
-    // faceapi.env.monkeyPatch({ fetch: fetch as any });
     await this.loadModels();
-    // faceapi.env.setEnv(faceapi.env.createNodejsEnv());
-
-    // faceapi.env.monkeyPatch({
-    //   Canvas: OffscreenCanvas,
-    //   createCanvasElement: () => {
-    //     return new OffscreenCanvas(480, 270);
-    //   },
-    // });
+    // console.log(faceapi.nets);
   }
 
   componentWillUnmount() {
@@ -116,17 +106,18 @@ export default class Main extends React.Component<
 
   async loadModels() {
     return Promise.all([
-      faceapi.loadTinyFaceDetectorModel(MODEL_URL),
-      faceapi.loadSsdMobilenetv1Model(MODEL_URL),
-      faceapi.loadFaceLandmarkModel(MODEL_URL),
-      faceapi.loadFaceDetectionModel(MODEL_URL),
-      faceapi.loadFaceRecognitionModel(MODEL_URL),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+      faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
     ]);
   }
 
   private queSession(session_id: string) {
     this.mdmServer.getQueryPhoto(session_id).then((result) => {
-      console.log("result: ", result);
+      // console.log("result: ", result);
       if (
         result &&
         result.success &&
@@ -140,16 +131,31 @@ export default class Main extends React.Component<
 
           const imgElement = document.getElementById("input-img");
           const canvasElement = document.getElementById("canvas");
+          const outCanvasElement = document.getElementById("canvas-output");
           // this.drawHTMLImage(this.canvas.current, testImageHTML, 296, 296);
           global.HTMLImageElement = window.HTMLImageElement;
           // var image = new Image();
           if (
             imgElement &&
             canvasElement &&
+            outCanvasElement &&
             (imgElement as HTMLImageElement) &&
-            (canvasElement as HTMLCanvasElement)
+            (canvasElement as HTMLCanvasElement) &&
+            (outCanvasElement as HTMLCanvasElement)
           ) {
             (imgElement as HTMLImageElement).onload = async () => {
+              this.mdmServer
+                .clearQuery(this.state.session_id)
+                .then((result) => {
+                  if (result && result.success) {
+                    console.log(result.success);
+                  } else if (result && result.error) {
+                    console.log(result.error);
+                  }
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
               //
               (canvasElement as HTMLCanvasElement).width =
                 imgElement.getBoundingClientRect().width;
@@ -164,32 +170,39 @@ export default class Main extends React.Component<
                   (canvasElement as HTMLCanvasElement).width,
                   (canvasElement as HTMLCanvasElement).height
                 );
-              //
-              // this.fullFaceDescriptions = await faceapi.allFaces(
-              //   canvasElement as HTMLCanvasElement,
-              //   minConfidence
-              // );
               setTimeout(async () => {
-                const singleResult = await faceapi
-                  .detectSingleFace(canvasElement as HTMLCanvasElement)
+                const detectionResult = await faceapi
+                  .detectAllFaces(canvasElement as HTMLCanvasElement)
                   .withFaceLandmarks()
                   .withFaceExpressions()
                   .withAgeAndGender()
-                  .withFaceDescriptor();
-                console.log(singleResult);
-                if (singleResult) {
-                  const faceMatcher = new faceapi.FaceMatcher(singleResult);
+                  .withFaceDescriptors();
+
+                console.log("detectionResult: ", detectionResult);
+                if (detectionResult && detectionResult.length) {
+                  const displaySize = {
+                    width: (canvasElement as HTMLCanvasElement).width,
+                    height: (canvasElement as HTMLCanvasElement).height,
+                  };
+                  faceapi.matchDimensions((outCanvasElement as HTMLCanvasElement), displaySize);
+                  const resizedDetections = faceapi.resizeResults(detectionResult, displaySize);
+                  faceapi.draw.drawDetections((outCanvasElement as HTMLCanvasElement), resizedDetections);
+                  faceapi.draw.drawFaceLandmarks((outCanvasElement as HTMLCanvasElement), resizedDetections);
+                  const minProbability = 0.05
+                  faceapi.draw.drawFaceExpressions((outCanvasElement as HTMLCanvasElement), resizedDetections, minProbability)
+                  // const descriptor = singleResult[0];
+                  const faceMatcher = new faceapi.FaceMatcher(detectionResult);
                   // const bestMatch = faceMatcher.findBestMatch(singleResult.descriptor);
-                  console.log(faceMatcher.toString()); //output
+                  console.log(faceMatcher); //output
                   setTimeout(() => {
                     if (this.state.is_running_process)
                       this.queSession(this.state.session_id);
-                  }, 3000);
+                  }, 500);
                 } else {
                   setTimeout(() => {
                     if (this.state.is_running_process)
                       this.queSession(this.state.session_id);
-                  }, 3000);
+                  }, 500);
                 }
               }, 1000);
             };
@@ -199,13 +212,13 @@ export default class Main extends React.Component<
           setTimeout(() => {
             if (this.state.is_running_process)
               this.queSession(this.state.session_id);
-          }, 3000);
+          }, 500);
         }
       } else {
         setTimeout(() => {
           if (this.state.is_running_process)
             this.queSession(this.state.session_id);
-        }, 3000);
+        }, 100);
       }
     });
   }
@@ -281,12 +294,18 @@ export default class Main extends React.Component<
               <div className="output-lay">
                 <div className="image-frame">
                   <canvas
-                    className="img-input"
-                    id="canvas"
-                    // width={296}
-                    // height={296}
+                    className="img-input canvas-output"
+                    id="canvas-output"
                   />
                 </div>
+              </div>
+              <div className="output-text-lay">
+                {/* <div className="image-frame">
+                  <canvas
+                    className="img-input"
+                    id="canvas"
+                  />
+                </div> */}
               </div>
             </div>
           </div>
