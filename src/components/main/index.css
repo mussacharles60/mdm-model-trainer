@@ -484,18 +484,26 @@
 }
 
 .text-cursor-anim {
-  animation: animated-text 4s steps(29,end) 1s 1 normal both,
-             animated-cursor 600ms steps(29,end) infinite;
+  border-right: solid 3px var(--color-sec-txt-info);
+  border-top: solid 0 white;
+  /* animation: animated-text 4s steps(29,end) 1s 1 normal both,
+             animated-cursor 600ms steps(29,end) infinite; */
+  padding: 0 8px 0 8px !important;
+  margin: 4px 0 4px 0 !important;
 }
 
-@keyframes animated-text{
-  from{width: 0;}
-  to{width: auto;}
+@keyframes animated-text {
+  from {
+    width: 0;
+  }
+  to {
+    width: auto;
+  }
 }
 
 @keyframes animated-cursor {
   from {
-    border-right-color: rgba(0, 255, 0, 0.75);
+    border-right-color: var(--color-sec-txt-info);
   }
   to {
     border-right-color: transparent;

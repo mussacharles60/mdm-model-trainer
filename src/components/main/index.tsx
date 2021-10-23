@@ -115,6 +115,7 @@ export default class Main extends React.Component<
   }
 
   private processResult(device: DeviceInfo) {
+    this.addLog("info", "processing image input no. " + device.sn + " from remote device...");
     const image_url = photo_url + device.sessionId + "/" + device.fileName;
     const imgElement = document.getElementById("input-img");
     const canvasElement = document.getElementById("canvas");
@@ -218,7 +219,7 @@ export default class Main extends React.Component<
           console.log("faceMatcher: ", faceMatcher); //output
           detectionResult.forEach((fd) => {
             const bestMatch = faceMatcher.findBestMatch(fd.descriptor);
-            this.addLog("success", bestMatch.toString());
+            this.addLog("success", "result for image input no. " + device.sn + " > " + bestMatch.toString());
             console.log("bestMatch: ", bestMatch.toString());
           });
           this.reQueSession();
@@ -378,7 +379,7 @@ export default class Main extends React.Component<
                       }, end) infinite`,
                         }}
                       >
-                        {` *** ${this.state.logs.length} entrie(s) ...`}
+                        {` *** ${this.state.logs.length} entries ...`}
                       </span>
                     </div>
                   );
@@ -407,6 +408,7 @@ interface Log {
 }
 
 interface DeviceInfo {
+  sn: number;
   fileName: string;
   // prefixName: string;
   userId: string;
