@@ -5,7 +5,7 @@ import "./index.css";
 import * as faceapi from "face-api.js";
 // import fetch from "node-fetch";
 import MDMServer, { photo_url } from "../../service";
-// import '../../service/faceEnvWorkerPatch';
+import { Virtuoso } from "react-virtuoso";
 
 // const Canvas = (props: any) => <canvas {...props}/>
 const MODEL_URL = "/models";
@@ -19,14 +19,12 @@ export default class Main extends React.Component<
 
     is_initializing: boolean;
     is_running_process: boolean;
-    error: string | null;
+    logs: Array<Log>;
   }
 > {
-  // private user_images: fr.ImageRGB[] = [];
-  // private recognizer: fr.FaceRecognizer = fr.FaceRecognizer();
   private mdmServer: MDMServer = new MDMServer();
-  private sessionInterval: any = null;
   private didMount: boolean = false;
+  private virtuoso: any;
 
   constructor(props: any) {
     super(props);
@@ -36,8 +34,10 @@ export default class Main extends React.Component<
       input_image: "",
       is_initializing: true,
       is_running_process: false,
-      error: null,
+      logs: [],
     };
+
+    this.virtuoso = React.createRef();
 
     this.onSessionIdChanged = this.onSessionIdChanged.bind(this);
     this.onStartSessionBtnClick = this.onStartSessionBtnClick.bind(this);
@@ -46,9 +46,11 @@ export default class Main extends React.Component<
 
   async componentDidMount() {
     this.didMount = true;
+    this.addLog("info", "Initializing...");
     await this.loadModels();
     console.log(faceapi.nets);
     this.setState({ is_initializing: false });
+    this.addLog("success", "Initialization completed.");
   }
 
   componentWillUnmount() {
@@ -66,12 +68,14 @@ export default class Main extends React.Component<
   }
   onSessionIdChanged(event: any) {
     this.setState({ session_id: event.target.value });
+    this.addLog("info", "Session changed. " + this.state.session_id);
   }
 
   private onStartSessionBtnClick() {
     if (this.state.is_running_process) return;
     if (this.state.session_id.length === 0) return;
     this.setState({ is_running_process: true, is_initializing: true });
+    this.addLog("success", "Session started for " + this.state.session_id);
     this.queSession(this.state.session_id);
   }
 
@@ -80,6 +84,7 @@ export default class Main extends React.Component<
       .getQueryPhoto(session_id)
       .then((result) => {
         // console.log("result: ", result);
+
         this.setState({ is_initializing: false });
         if (
           result &&
@@ -87,6 +92,7 @@ export default class Main extends React.Component<
           result.success.data &&
           result.success.data.length > 0
         ) {
+          this.addLog("success", result.message);
           const device: DeviceInfo | null = result.success.data[0];
           if (device && this.state.is_running_process) {
             this.processResult(device);
@@ -94,10 +100,15 @@ export default class Main extends React.Component<
             this.reQueSession();
           }
         } else {
+          if (result.error && result.error.meessage) {
+            this.addLog("fail", result.error.message);
+          }
+          this.addLog("fail", "Session caught!!");
           this.reQueSession();
         }
       })
       .catch((err) => {
+        this.addLog("fail", "Session caught!!");
         this.setState({ is_initializing: false });
         console.log(err);
       });
@@ -123,12 +134,17 @@ export default class Main extends React.Component<
           .clearQuery(this.state.session_id)
           .then((result) => {
             if (result && result.success) {
-              console.log(result.success);
+              this.addLog("success", result.success.message);
+              // console.log(result.success);
             } else if (result && result.error) {
-              console.log(result.error);
+              this.addLog("fail", result.error.message);
+              // console.log(result.error);
+            } else {
+              this.addLog("fail", "Session caught!!");
             }
           })
           .catch((error) => {
+            this.addLog("fail", "Session caught!!");
             console.log(error);
           });
         //
@@ -157,6 +173,7 @@ export default class Main extends React.Component<
             (outCanvasElement as HTMLCanvasElement).width,
             (outCanvasElement as HTMLCanvasElement).height
           );
+        this.addLog("info", "Recognition started.");
         const detectionResult = await faceapi
           .detectAllFaces(canvasElement as HTMLCanvasElement)
           .withFaceLandmarks()
@@ -164,6 +181,7 @@ export default class Main extends React.Component<
           .withAgeAndGender()
           .withFaceDescriptors();
 
+        this.addLog("success", "Recognition completed.");
         console.log("detectionResult: ", detectionResult);
         if (detectionResult && detectionResult.length) {
           if (!this.didMount) return;
@@ -196,13 +214,16 @@ export default class Main extends React.Component<
           // const descriptor = singleResult[0];
           const faceMatcher = new faceapi.FaceMatcher(detectionResult);
           // const bestMatch = faceMatcher.findBestMatch(singleResult.descriptor);
+          this.addLog("info", "Face match processing");
           console.log("faceMatcher: ", faceMatcher); //output
           detectionResult.forEach((fd) => {
             const bestMatch = faceMatcher.findBestMatch(fd.descriptor);
+            this.addLog("success", bestMatch.toString());
             console.log("bestMatch: ", bestMatch.toString());
           });
           this.reQueSession();
         } else {
+          this.addLog("fail", "Queue caught!!");
           this.reQueSession();
         }
       };
@@ -212,6 +233,7 @@ export default class Main extends React.Component<
   }
 
   private reQueSession() {
+    this.addLog("info", "Requeing session started...");
     setTimeout(() => {
       if (!this.didMount) return;
       if (this.state.is_running_process) {
@@ -223,6 +245,24 @@ export default class Main extends React.Component<
   private onStopSessionBtnClick() {
     // if (this.sessionInterval) clearInterval(this.sessionInterval);
     this.setState({ is_running_process: false, is_initializing: false });
+    this.addLog("info", "Session stoped successfully.");
+  }
+
+  private addLog(logType: Log["type"], message: string) {
+    if (!this.didMount) return;
+    const logs: Array<Log> = this.state.logs;
+    logs.push({
+      date_millis: new Date().valueOf(),
+      message: message,
+      type: logType,
+    });
+    this.setState({ logs: logs });
+    if (this.virtuoso && this.virtuoso.current)
+      this.virtuoso.current.scrollToIndex({
+        index: this.state.logs.length - 1,
+        align: "end",
+        behavior: "smooth",
+      });
   }
 
   render() {
@@ -311,9 +351,59 @@ export default class Main extends React.Component<
             <div className="title-lay">Output</div>
           </div>
         </div>
+        <div className="bottom-lay">
+          <div className="left-lay"></div>
+          <div className="center-lay">
+            <div className="title-lay">Logs</div>
+            <Virtuoso
+              className="logs-lay"
+              ref={this.virtuoso}
+              style={{ width: "100%", height: "calc(100% - 30px)" }}
+              totalCount={this.state.logs.length}
+              components={{
+                Footer: () => {
+                  return (
+                    <div className="log-cont">
+                      <span className={`log-time log-info-text`}>
+                        {"> " + new Date()}
+                      </span>
+                      <span
+                        className={`log-text log-info-text text-cursor-anim`}
+                        style={{
+                          animation: `animated-text 4s steps(${
+                            this.state.logs.length + 19
+                          }, end) 1s 1 normal both,
+                      animated-cursor 600ms steps(${
+                        this.state.logs.length + 19
+                      }, end) infinite`,
+                        }}
+                      >
+                        {` *** ${this.state.logs.length} entrie(s) ...`}
+                      </span>
+                    </div>
+                  );
+                },
+              }}
+              itemContent={(index) => (
+                <LogView
+                  date_millis={this.state.logs[index].date_millis}
+                  message={this.state.logs[index].message}
+                  type={this.state.logs[index].type}
+                />
+              )}
+            />
+          </div>
+          <div className="right-lay"></div>
+        </div>
       </div>
     );
   }
+}
+
+interface Log {
+  date_millis: number;
+  message: string;
+  type: "success" | "fail" | "info";
 }
 
 interface DeviceInfo {
@@ -335,20 +425,14 @@ interface DeviceInfo {
 //   onCancelClick(): void;
 // }
 
-// const ImageInput = (props: ImageInputInterface) => {
-//   return (
-//     <div className="img-view-cont">
-//       <img className="img-input" alt="..." src={props.image} />
-//       <div
-//         className="img-remove-btn"
-//         onClick={(e) => {
-//           e.stopPropagation();
-//           e.preventDefault();
-//           props.onCancelClick();
-//         }}
-//       >
-//         Click To Remove
-//       </div>
-//     </div>
-//   );
-// };
+const LogView = (props: Log) => {
+  const time = new Date(props.date_millis);
+  return (
+    <div className="log-cont">
+      <span className={`log-time log-${props.type}-text`}>{"> " + time}</span>
+      <span className={`log-text log-${props.type}-text`}>
+        {" " + props.message}
+      </span>
+    </div>
+  );
+};

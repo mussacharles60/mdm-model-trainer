@@ -24,6 +24,9 @@ code {
   --color-bg-sec: rgb(252, 252, 252);
   --color-sec-txt: rgb(46, 141, 204);
   --color-sec-txt-cont: rgb(86, 87, 88);
+  --color-sec-txt-info: rgb(55, 55, 55);
+  --color-sec-txt-err: rgb(232, 0, 23);
+  --color-sec-txt-ok: rgb(5, 124, 25);
 }
 
 /* .mdm-shadow {
