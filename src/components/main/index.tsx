@@ -25,6 +25,7 @@ export default class Main extends React.Component<
   private mdmServer: MDMServer = new MDMServer();
   private didMount: boolean = false;
   private virtuoso: any;
+  private no_result_data_count: number = 0;
 
   constructor(props: any) {
     super(props);
@@ -92,7 +93,9 @@ export default class Main extends React.Component<
           result.success.data &&
           result.success.data.length > 0
         ) {
-          this.addLog("success", result.message);
+          this.no_result_data_count = 0;
+          if (result.success.message)
+            this.addLog("success", result.success.message);
           const device: DeviceInfo | null = result.success.data[0];
           if (device && this.state.is_running_process) {
             this.processResult(device);
@@ -103,19 +106,33 @@ export default class Main extends React.Component<
           if (result.error && result.error.meessage) {
             this.addLog("fail", result.error.message);
           }
-          this.addLog("fail", "Session caught!!");
+          this.no_result_data_count++;
+          if (this.no_result_data_count > 6) {
+            this.no_result_data_count = 0;
+            this.addLog(
+              "fail",
+              "Session caught! could not retreive image data."
+            );
+          }
+
           this.reQueSession();
         }
       })
       .catch((err) => {
-        this.addLog("fail", "Session caught!!");
+        this.addLog(
+          "fail",
+          "Session caught! something went wrong on main process."
+        );
         this.setState({ is_initializing: false });
         console.log(err);
       });
   }
 
   private processResult(device: DeviceInfo) {
-    this.addLog("info", "processing image input no. " + device.sn + " from remote device...");
+    this.addLog(
+      "info",
+      "processing image input no. " + device.sn + " from remote device..."
+    );
     const image_url = photo_url + device.sessionId + "/" + device.fileName;
     const imgElement = document.getElementById("input-img");
     const canvasElement = document.getElementById("canvas");
@@ -141,11 +158,17 @@ export default class Main extends React.Component<
               this.addLog("fail", result.error.message);
               // console.log(result.error);
             } else {
-              this.addLog("fail", "Session caught!!");
+              this.addLog(
+                "fail",
+                "Session caught! could not perform remote image query clearing."
+              );
             }
           })
           .catch((error) => {
-            this.addLog("fail", "Session caught!!");
+            this.addLog(
+              "fail",
+              "Session caught! something went wrong on main process."
+            );
             console.log(error);
           });
         //
@@ -219,12 +242,21 @@ export default class Main extends React.Component<
           console.log("faceMatcher: ", faceMatcher); //output
           detectionResult.forEach((fd) => {
             const bestMatch = faceMatcher.findBestMatch(fd.descriptor);
-            this.addLog("success", "result for image input no. " + device.sn + " > " + bestMatch.toString());
+            this.addLog(
+              "success",
+              "result for image input no. " +
+                device.sn +
+                " > " +
+                bestMatch.toString()
+            );
             console.log("bestMatch: ", bestMatch.toString());
           });
           this.reQueSession();
         } else {
-          this.addLog("fail", "Queue caught!!");
+          this.addLog(
+            "fail",
+            "Queue caught! could not perform face recognition."
+          );
           this.reQueSession();
         }
       };
